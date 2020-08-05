@@ -46,8 +46,9 @@ func TestBundleCommands(t *testing.T) {
 type BundleSuite struct {
 	suite.Suite
 
-	cert1 *x509.Certificate
-	cert2 *x509.Certificate
+	cert1    *x509.Certificate
+	cert2    *x509.Certificate
+	key1Pkix []byte
 
 	ds                 *fakedatastore.DataStore
 	registrationClient *fakeregistrationclient.Client
@@ -65,6 +66,10 @@ func (s *BundleSuite) SetupTest() {
 	cert1, err := pemutil.ParseCertificate([]byte(cert1PEM))
 	s.Require().NoError(err)
 	s.cert1 = cert1
+
+	key1Pkix, err := x509.MarshalPKIXPublicKey(cert1.PublicKey)
+	s.Require().NoError(err)
+	s.key1Pkix = key1Pkix
 
 	cert2, err := pemutil.ParseCertificate([]byte(cert2PEM))
 	s.Require().NoError(err)
@@ -109,6 +114,8 @@ func (s *BundleSuite) AfterTest(suiteName, testName string) {
 func (s *BundleSuite) TestShowHelp() {
 	s.showCmd.Help()
 	s.Require().Equal(`Usage of bundle show:
+  -format string
+    	The format to show the bundle. Either "x509" or "jwks". (default "x509")
   -registrationUDSPath string
     	Registration API UDS path (default "/tmp/spire-registration.sock")
 `, s.stderr.String())
@@ -136,9 +143,24 @@ dZglS5kKnYigmwDh+/U=
 `)
 }
 
+func (s *BundleSuite) TestShowInvalidFormat() {
+	s.createBundle(&common.Bundle{
+		TrustDomainId: "spiffe://example.test",
+		RootCas: []*common.Certificate{
+			{DerBytes: s.cert1.Raw},
+		},
+	})
+
+	rc := s.showCmd.Run([]string{"-format", "invalid"})
+	s.Require().Equal(1, rc)
+	s.Require().Equal("invalid format: \"invalid\"\n", s.stderr.String())
+}
+
 func (s *BundleSuite) TestSetHelp() {
 	s.setCmd.Help()
 	s.Require().Equal(`Usage of bundle set:
+  -format string
+    	The format of the bundle data. Either "x509" or "jwks". (default "x509")
   -id string
     	SPIFFE ID of the trust domain
   -path string
@@ -152,6 +174,12 @@ func (s *BundleSuite) TestSetWithoutID() {
 	rc := s.setCmd.Run([]string{})
 	s.Require().Equal(1, rc)
 	s.Require().Equal("id is required\n", s.stderr.String())
+}
+
+func (s *BundleSuite) TestSetInvalidFormat() {
+	rc := s.setCmd.Run([]string{"-id", "spiffe://otherdomain.test/spire/server", "-format", "invalid"})
+	s.Require().Equal(1, rc)
+	s.Require().Equal("invalid format: \"invalid\"\n", s.stderr.String())
 }
 
 func (s *BundleSuite) TestSetWithInvalidTrustDomainID() {
@@ -200,6 +228,8 @@ func (s *BundleSuite) TestSetCreatesBundleFromFile() {
 func (s *BundleSuite) TestListHelp() {
 	s.listCmd.Help()
 	s.Require().Equal(`Usage of bundle list:
+  -format string
+    	The format to list federated bundles. Either "x509" or "jwks". (default "x509")
   -id string
     	SPIFFE ID of the trust domain
   -registrationUDSPath string
@@ -277,6 +307,19 @@ q+2ZoNyl4udPj7IMYIGX8yuCNRmh7m3d9tvoDgIgbS26wSwDjngGqdiHHL8fTcgg
 diIqWtxAqBLFrx8zNS4=
 -----END CERTIFICATE-----
 `)
+}
+
+func (s *BundleSuite) TestListInvalidFormat() {
+	s.createBundle(&common.Bundle{
+		TrustDomainId: "spiffe://domain1.test",
+		RootCas: []*common.Certificate{
+			{DerBytes: s.cert1.Raw},
+		},
+	})
+
+	rc := s.listCmd.Run([]string{"-format", "invalid"})
+	s.Require().Equal(1, rc)
+	s.Require().Equal("invalid format: \"invalid\"\n", s.stderr.String())
 }
 
 func (s *BundleSuite) TestDeleteHelp() {

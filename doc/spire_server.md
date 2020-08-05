@@ -285,15 +285,17 @@ Displays the bundle for the trust domain of the server.
 | Command       | Action                                                             | Default        |
 |:--------------|:-------------------------------------------------------------------|:---------------|
 | `-registrationUDSPath` | Path to the SPIRE server registration api socket | /tmp/spire-registration.sock |
+| `-format` | The format to show the bundle. Either `x509` or `jwks` | x509 |
 
 ### `spire-server bundle list`
 
-Displays bundles from other trust domains.
+Displays federated bundles.
 
 | Command       | Action                                                             | Default        |
 |:--------------|:-------------------------------------------------------------------|:---------------|
 | `-id`         | The trust domain SPIFFE ID of the bundle to show. If unset, all trust bundles are shown | |
 | `-registrationUDSPath` | Path to the SPIRE server registration api socket | /tmp/spire-registration.sock |
+| `-format` | The format to show the federated bundles. Either `x509` or `jwks` | x509 |
 
 ### `spire-server bundle set`
 
@@ -304,6 +306,7 @@ Creates or updates bundle data for a trust domain. This command cannot be used t
 | `-id`         | The trust domain SPIFFE ID of the bundle to set. | |
 | `-path`       | Path on disk to the file containing the bundle data. If unset, data is read from stdin. | |
 | `-registrationUDSPath` | Path to the SPIRE server registration api socket | /tmp/spire-registration.sock |
+| `-format` | The format of the bundle to set. Either `x509` or `jwks` | x509 |
 
 ### `spire-server bundle delete`
 
@@ -384,34 +387,6 @@ Mints a JWT-SVID.
 | `-spiffeID`   | The SPIFFE ID of the JWT-SVID                                      | |
 | `-ttl`        | The TTL of the JWT-SVID                                            | |
 | `-write`      | File to write token to instead of stdout                           | |
-
-### `spire-server experimental bundle show`
-
-(Experimental) Displays the bundle for the trust domain of the server as a JWKS document
-
-| Command       | Action                                                             | Default        |
-|:--------------|:-------------------------------------------------------------------|:---------------|
-| `-registrationUDSPath` | Path to the SPIRE server registration api socket | /tmp/spire-registration.sock |
-
-### `spire-server experimental bundle list`
-
-(Experimental) Displays bundles from other trust domains as JWKS documents
-
-| Command       | Action                                                             | Default        |
-|:--------------|:-------------------------------------------------------------------|:---------------|
-| `-id`         | The trust domain SPIFFE ID of the bundle to show. If unset, all trust bundles are shown | |
-| `-registrationUDSPath` | Path to the SPIRE server registration api socket | /tmp/spire-registration.sock |
-
-### `spire-server experimental bundle set`
-
-(Experimental) Creates or updates bundle data for a trust domain. This command cannot be used to alter the server trust domain bundle, only bundles for other trust domains.
-
-Bundle data read from stdin or the path is expected to be a JWKS document.
-
-| Command       | Action                                                             | Default        |
-|:--------------|:-------------------------------------------------------------------|:---------------|
-| `-path`       | Path on disk to the file containing the bundle data. If unset, data is read from stdin. | |
-| `-registrationUDSPath` | Path to the SPIRE server registration api socket | /tmp/spire-registration.sock |
 
 ## Sample configuration file
 
