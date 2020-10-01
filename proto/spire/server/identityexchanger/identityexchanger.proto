@@ -1,0 +1,58 @@
+syntax = "proto3";
+
+package spire.server.indentityexchanger;
+option go_package = "github.com/spiffe/spire/proto/spire/server/indentityexchanger";
+
+import "spire/common/plugin/plugin.proto";
+import "spire/common/common.proto";
+
+service IdentityExchanger {
+    // Exchange a platform-specific identity document with an SVID
+    rpc Exchange(stream ExchangeRequest) returns (stream ExchangeResponse);
+
+    // Responsible for configuration of the indentityexchanger plugin
+    rpc Configure(spire.common.plugin.ConfigureRequest) returns (spire.common.plugin.ConfigureResponse);
+
+    // Returns the version and related metadata of the installed plugin
+    rpc GetPluginInfo(spire.common.plugin.GetPluginInfoRequest) returns (spire.common.plugin.GetPluginInfoResponse);
+}
+
+// Represents a request to identify an agentless workload.
+message ExchangeRequest {
+    oneof step {
+        // A type witch contains identity data for an specific plataform.
+        ExchangeData data = 1;
+    
+        // Exchange response
+        bytes response = 2;
+    }
+}
+
+// Represents a response when identifying caller
+message ExchangeResponse {
+    // Success response, that contains selectors and spiffeID extracted from presented data
+    message Response {
+        // Worklaod SPIFFE ID
+        string workload_id = 1;
+
+	    // List of selectors 
+        repeated spire.common.Selector selectors = 2;
+    }
+    
+    oneof step {
+        // Challenge required for identity verification
+        bytes challenge = 1;
+
+        // Response that contains extracted information from presented data
+        Response response = 2;
+    }
+}
+
+// TODO: MOVE TO COMMON, Is it really required to move outside?
+message ExchangeData {
+    // Type of identity exchange. Typically, the plugin name in charge of filling the data.
+    string type = 1;
+
+    // The platform-specific identity exchange data.
+    bytes data = 2;
+}
