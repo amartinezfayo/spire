@@ -148,11 +148,13 @@ protos := \
 	proto/spire/api/server/agent/v1/agent.proto \
 	proto/spire/api/server/bundle/v1/bundle.proto \
 	proto/spire/api/server/entry/v1/entry.proto \
+	proto/spire/api/server/identity/v1/identity.proto \
 	proto/spire/api/server/svid/v1/svid.proto \
 	proto/spire/types/agent.proto \
 	proto/spire/types/attestation.proto \
 	proto/spire/types/bundle.proto \
 	proto/spire/types/entry.proto \
+	proto/spire/types/identityexchange.proto \
 	proto/spire/types/jointoken.proto \
 	proto/spire/types/jwtsvid.proto \
 	proto/spire/types/selector.proto \
@@ -178,6 +180,7 @@ plugingen_plugins = \
 	proto/spire/agent/workloadattestor/workloadattestor.proto,pkg/agent/plugin/workloadattestor,WorkloadAttestor \
 	proto/spire/agent/keymanager/keymanager.proto,pkg/agent/plugin/keymanager,KeyManager \
 	proto/private/test/catalogtest/test.proto,proto/private/test/catalogtest,Plugin,shared \
+	proto/spire/server/identityexchanger/identityexchanger.proto,pkg/server/plugin/identityexchanger,IdentityExchanger \
 
 plugingen_services = \
 	proto/private/test/catalogtest/test.proto,proto/private/test/catalogtest,Service,shared \
