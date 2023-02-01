@@ -54,6 +54,7 @@ type Server struct {
 // This method initializes the server, including its plugins,
 // and then blocks until it's shut down or an error is encountered.
 func (s *Server) Run(ctx context.Context) error {
+	s.config.Log.WithField("arch", runtime.GOARCH).Info("Starting SPIRE Server")
 	if err := s.run(ctx); err != nil {
 		s.config.Log.WithError(err).Error("Fatal run error")
 		return err

@@ -41,7 +41,7 @@ type Agent struct {
 // This method initializes the agent, including its plugins,
 // and then blocks on the main event loop.
 func (a *Agent) Run(ctx context.Context) error {
-	a.c.Log.Infof("Starting agent with data directory: %q", a.c.DataDir)
+	a.c.Log.WithField("arch", runtime.GOARCH).WithField("data_directory", a.c.DataDir).Info("Starting SPIRE Agent")
 	if err := diskutil.CreateDataDirectory(a.c.DataDir); err != nil {
 		return err
 	}
