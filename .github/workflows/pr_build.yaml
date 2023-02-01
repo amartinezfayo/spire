@@ -218,8 +218,8 @@ jobs:
           name: images-windows
           path: images-windows.tar.gz
 
-  integration-linux-amd64:
-    name: integration (linux/amd64)
+  integration-linux:
+    name: integration (linux)
     runs-on: ubuntu-20.04
     needs: [cache-deps, images]
 
@@ -231,6 +231,7 @@ jobs:
       matrix:
         num_runners: [5]
         runner_id: [1, 2, 3, 4, 5]
+        build-arch: [ x64, arm64 ]
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -267,63 +268,6 @@ jobs:
         run: |
           tar xvf images.tar.gz
           make load-images
-      - name: Run integration tests
-        env:
-          NUM_RUNNERS: ${{ matrix.num_runners }}
-          THIS_RUNNER: ${{ matrix.runner_id }}
-          TERM: dumb
-          CICD_TARGET_BRANCH: ${{ github.event.pull_request.base.ref }}
-        run: ./.github/workflows/scripts/split.sh | xargs ./test/integration/test.sh
-
-  integration-linux-arm64:
-    name: integration (linux/arm64)
-    runs-on: ubuntu-20.04
-    needs: [cache-deps, images]
-
-    permissions:
-      contents: read
-
-    strategy:
-      fail-fast: false
-      matrix:
-        num_runners: [5]
-        runner_id: [1, 2, 3, 4, 5]
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-        with:
-          # The "upgrade" integration test needs the history to ensure
-          # that the version number in the source code has been bumped as
-          # expected. This action does not fetch tags unless we supply a
-          # fetch depth of zero.
-          fetch-depth: 0
-      - name: Setup go
-        uses: actions/setup-go@v3
-        with:
-          go-version: ${{ env.GO_VERSION }}
-      - name: Install regctl
-        uses: regclient/actions/regctl-installer@main
-      - name: Load cached deps
-        uses: actions/cache@v3
-        with:
-          path: ~/go/pkg/mod
-          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-      - name: Load cached build tools
-        uses: actions/cache@v3
-        with:
-          path: .build
-          key: ${{ runner.os }}-tools-${{ github.sha }}
-          restore-keys: |
-            ${{ runner.os }}-tools-
-      - name: Download archived images
-        uses: actions/download-artifact@v3
-        with:
-          name: images
-          path: .
-      - name: Load archived images
-        run: |
-          tar xvf images.tar.gz
-          PLATFORM=linux/arm64 make load-images
       - name: Run integration tests
         env:
           NUM_RUNNERS: ${{ matrix.num_runners }}
@@ -545,8 +489,8 @@ jobs:
 
   success:
     runs-on: ubuntu-20.04
-    needs: [lint, unit-test, unit-test-race-detector, artifacts, integration-linux-amd64,
-            integration-linux-arm64, lint-windows, unit-test-windows, artifact-windows, integration-windows]
+    needs: [lint, unit-test, unit-test-race-detector, artifacts, integration-linux,
+            lint-windows, unit-test-windows, artifact-windows, integration-windows]
 
     permissions:
       contents: read
