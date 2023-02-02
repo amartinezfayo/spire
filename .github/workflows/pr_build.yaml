@@ -329,12 +329,13 @@ jobs:
         with:
           arch: aarch64
           distro: ubuntu20.04
-        env:
-          NUM_RUNNERS: ${{ matrix.num_runners }}
-          THIS_RUNNER: ${{ matrix.runner_id }}
-          TERM: dumb
-          CICD_TARGET_BRANCH: ${{ github.event.pull_request.base.ref }}
-        run: ./.github/workflows/scripts/split.sh | xargs ./test/integration/test.sh
+          env: |
+            NUM_RUNNERS: ${{ matrix.num_runners }}
+            THIS_RUNNER: ${{ matrix.runner_id }}
+            TERM: dumb
+            CICD_TARGET_BRANCH: ${{ github.event.pull_request.base.ref }}
+          run: |
+            ./.github/workflows/scripts/split.sh | xargs ./test/integration/test.sh
 
   integration-windows:
     name: integration (windows)
