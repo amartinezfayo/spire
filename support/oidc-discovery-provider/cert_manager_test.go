@@ -176,15 +176,15 @@ func TestTLSConfig(t *testing.T) {
 		// Assert certificate is updated
 		require.Eventuallyf(t, func() bool {
 			cert, err := tlsConfig.GetCertificate(chInfo)
-			if err != nil {
-				return false
-			}
+			require.NoError(t, err)
 			require.Len(t, cert.Certificate, 1)
 			x509Cert, err := x509.ParseCertificate(cert.Certificate[0])
-			if err != nil {
+			require.NoError(t, err)
+			if !reflect.DeepEqual(oidcServerCertUpdated1, x509Cert) {
+				fmt.Println("oidcServerCertUpdated1 != x509Cert")
 				return false
 			}
-			return reflect.DeepEqual(oidcServerCertUpdated1, x509Cert)
+			return true
 		}, testTimeout, testPollInterval, "Failed to assert updated certificate")
 	})
 
