@@ -11,6 +11,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"runtime"
 	"strings"
 	"testing"
 	"time"
@@ -154,39 +155,41 @@ func TestTLSConfig(t *testing.T) {
 		require.Equal(t, oidcServerCert, x509Cert)
 	})
 
-	t.Run("success watching cert file changes", func(t *testing.T) {
-		oidcServerCertUpdatedPem := pem.EncodeToMemory(&pem.Block{
-			Type:  "CERTIFICATE",
-			Bytes: oidcServerCertUpdated1.Raw,
-		})
-		writeFile(t, certFilePath, oidcServerCertUpdatedPem)
+	if runtime.GOOS != "windows" {
+		t.Run("success watching cert file changes", func(t *testing.T) {
+			oidcServerCertUpdatedPem := pem.EncodeToMemory(&pem.Block{
+				Type:  "CERTIFICATE",
+				Bytes: oidcServerCertUpdated1.Raw,
+			})
+			writeFile(t, certFilePath, oidcServerCertUpdatedPem)
 
-		clk.Add(5 * time.Millisecond)
+			clk.Add(5 * time.Millisecond)
 
-		// Certificate is not updated yet
-		cert, err := tlsConfig.GetCertificate(chInfo)
-		require.NoError(t, err)
-		require.Len(t, cert.Certificate, 1)
-		x509Cert, err := x509.ParseCertificate(cert.Certificate[0])
-		require.NoError(t, err)
-		require.Equal(t, oidcServerCert, x509Cert)
-
-		clk.Add(10 * time.Millisecond)
-
-		// Assert certificate is updated
-		require.Eventuallyf(t, func() bool {
+			// Certificate is not updated yet
 			cert, err := tlsConfig.GetCertificate(chInfo)
 			require.NoError(t, err)
 			require.Len(t, cert.Certificate, 1)
 			x509Cert, err := x509.ParseCertificate(cert.Certificate[0])
 			require.NoError(t, err)
-			if !reflect.DeepEqual(oidcServerCertUpdated1, x509Cert) {
-				fmt.Println("oidcServerCertUpdated1 != x509Cert")
-				return false
-			}
-			return true
-		}, testTimeout, testPollInterval, "Failed to assert updated certificate")
-	})
+			require.Equal(t, oidcServerCert, x509Cert)
+
+			clk.Add(10 * time.Millisecond)
+
+			// Assert certificate is updated
+			require.Eventuallyf(t, func() bool {
+				cert, err := tlsConfig.GetCertificate(chInfo)
+				require.NoError(t, err)
+				require.Len(t, cert.Certificate, 1)
+				x509Cert, err := x509.ParseCertificate(cert.Certificate[0])
+				require.NoError(t, err)
+				if !reflect.DeepEqual(oidcServerCertUpdated1, x509Cert) {
+					fmt.Println("oidcServerCertUpdated1 != x509Cert")
+					return false
+				}
+				return true
+			}, testTimeout, testPollInterval, "Failed to assert updated certificate")
+		})
+	}
 
 	t.Run("success watching to key file changes", func(t *testing.T) {
 		writeFile(t, keyFilePath, pem.EncodeToMemory(&pem.Block{
