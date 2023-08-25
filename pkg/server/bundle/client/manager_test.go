@@ -27,7 +27,6 @@ func TestManagerPeriodicBundleRefresh(t *testing.T) {
 	localBundle.SetRefreshHint(time.Hour)
 	endpointBundle := spiffebundle.FromX509Authorities(trustDomain, []*x509.Certificate{createCACertificate(t, "endpoint")})
 	endpointBundle.SetRefreshHint(time.Hour * 2)
-	noRefreshBundle := spiffebundle.FromX509Authorities(trustDomain, []*x509.Certificate{createCACertificate(t, "endpoint")})
 
 	source := NewTrustDomainConfigSet(TrustDomainConfigMap{
 		trustDomain: TrustDomainConfig{
@@ -56,12 +55,6 @@ func TestManagerPeriodicBundleRefresh(t *testing.T) {
 			localBundle:    localBundle,
 			endpointBundle: endpointBundle,
 			nextRefresh:    calculateNextUpdate(endpointBundle),
-		},
-		{
-			name:           "endpoint bundle does not specify refresh_hint",
-			localBundle:    localBundle,
-			endpointBundle: noRefreshBundle,
-			nextRefresh:    time.Minute * 5,
 		},
 	}
 

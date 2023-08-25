@@ -29,11 +29,10 @@ type ServerAuth interface {
 }
 
 type ServerConfig struct {
-	Log         logrus.FieldLogger
-	Address     string
-	Getter      Getter
-	ServerAuth  ServerAuth
-	RefreshHint *time.Duration
+	Log        logrus.FieldLogger
+	Address    string
+	Getter     Getter
+	ServerAuth ServerAuth
 
 	// test hooks
 	listen func(network, address string) (net.Listener, error)
@@ -101,12 +100,7 @@ func (s *Server) serveHTTP(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	var refreshHint time.Duration
-	if s.c.RefreshHint != nil {
-		refreshHint = *s.c.RefreshHint
-	} else {
-		refreshHint = bundleutil.CalculateRefreshHint(b)
-	}
+	refreshHint := bundleutil.CalculateRefreshHint(b)
 
 	// TODO: bundle sequence number?
 	opts := []bundleutil.MarshalOption{

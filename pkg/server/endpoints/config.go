@@ -113,8 +113,7 @@ func (c *Config) maybeMakeBundleEndpointServer() Server {
 			}
 			return bundleutil.SPIFFEBundleFromProto(commonBundle)
 		}),
-		RefreshHint: c.BundleEndpoint.RefreshHint,
-		ServerAuth:  serverAuth,
+		ServerAuth: serverAuth,
 	})
 }
 
