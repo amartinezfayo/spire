@@ -147,7 +147,7 @@ jobs:
       - name: Archive artifacts
         uses: actions/upload-artifact@c7d193f32edcb7bfad88892161225aeda64e9392 # v3
         with:
-          name: binaries
+          name: binaries-${{ runner.os }}
           path: ./artifacts/
 
   images:
@@ -555,7 +555,7 @@ jobs:
       - name: Archive artifacts
         uses: actions/upload-artifact@c7d193f32edcb7bfad88892161225aeda64e9392 # v3
         with:
-          name: binaries
+          name: binaries-${{ runner.os }}
           path: ./artifacts/
 
   success:
