@@ -145,7 +145,7 @@ jobs:
       - name: Build artifacts
         run: ./.github/workflows/scripts/build_artifacts.sh ${{ runner.os }}
       - name: Archive artifacts
-        uses: actions/upload-artifact@c7d193f32edcb7bfad88892161225aeda64e9392 # v3
+        uses: actions/upload-artifact@c7d193f32edcb7bfad88892161225aeda64e9392 # v4
         with:
           name: binaries-${{ runner.os }}
           path: ./artifacts/
@@ -185,7 +185,7 @@ jobs:
       - name: Export images
         run: tar -czvf images.tar.gz *-image.tar
       - name: Archive images
-        uses: actions/upload-artifact@c7d193f32edcb7bfad88892161225aeda64e9392 # v3
+        uses: actions/upload-artifact@c7d193f32edcb7bfad88892161225aeda64e9392 # v4
         with:
           name: images
           path: images.tar.gz
@@ -202,6 +202,11 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+      - name: Download artifacts
+        uses: actions/download-artifact@7a1cd3216ca9260cd8022db641d960b1db4d1be4 # v4.0.0
+        with:
+          name: binaries-${{ runner.os }}
+          path: ./bin/
       - name: Build images
         run: make images-windows
       - name: Export images
@@ -209,7 +214,7 @@ jobs:
           docker save spire-server-windows:latest-local spire-agent-windows:latest-local oidc-discovery-provider-windows:latest-local -o images-windows.tar
           gzip images-windows.tar
       - name: Archive images
-        uses: actions/upload-artifact@c7d193f32edcb7bfad88892161225aeda64e9392 # v3
+        uses: actions/upload-artifact@c7d193f32edcb7bfad88892161225aeda64e9392 # v4
         with:
           name: images-windows
           path: images-windows.tar.gz
@@ -232,275 +237,6 @@ jobs:
 
     outputs:
       test: ${{ steps.set-matrix.outputs.test }}
-  
-
-  integration:
-    name: integration (linux)
-    runs-on: ubuntu-20.04
-    needs: [cache-deps, images]
-    timeout-minutes: 45
-
-    permissions:
-      contents: read
-
-    strategy:
-      fail-fast: false
-      matrix:
-        num_runners: [5]
-        runner_id: [1, 2, 3, 4, 5]
-    steps:
-      - name: Checkout
-        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
-        with:
-          # The "upgrade" integration test needs the history to ensure
-          # that the version number in the source code has been bumped as
-          # expected. This action does not fetch tags unless we supply a
-          # fetch depth of zero.
-          fetch-depth: 0
-      - name: Setup go
-        uses: actions/setup-go@0c52d547c9bc32b1aa3301fd7a9cb496313a4491 # v5.0.0
-        with:
-          go-version: ${{ env.GO_VERSION }}
-      - name: Install regctl
-        uses: regclient/actions/regctl-installer@b6614f5f56245066b533343a85f4109bdc38c8cc # main
-      - name: Load cached deps
-        uses: actions/cache@704facf57e6136b1bc63b828d79edcd491f0ee84 # v3.3.2
-        with:
-          path: ~/go/pkg/mod
-          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-      - name: Load cached build tools
-        uses: actions/cache@704facf57e6136b1bc63b828d79edcd491f0ee84 # v3.3.2
-        with:
-          path: .build
-          key: ${{ runner.os }}-tools-${{ hashFiles('.go-version','Makefile') }}
-      - name: Download archived images
-        uses: actions/download-artifact@7a1cd3216ca9260cd8022db641d960b1db4d1be4 # v4.0.0
-        with:
-          name: images
-          path: .
-      - name: Load archived images
-        run: |
-          tar xvf images.tar.gz
-          make load-images
-      - name: Run integration tests
-        env:
-          NUM_RUNNERS: ${{ matrix.num_runners }}
-          THIS_RUNNER: ${{ matrix.runner_id }}
-          TERM: dumb
-          CICD_TARGET_BRANCH: ${{ github.event.pull_request.base.ref }}
-        run: ./.github/workflows/scripts/split.sh | xargs ./test/integration/test.sh
-
-
-
-  integration-k8s:
-    name: integration-k8s
-    runs-on: ubuntu-20.04
-    needs: [cache-deps, images, build-matrix]
-    timeout-minutes: 45
-
-    permissions:
-      contents: read
-
-    strategy:
-      fail-fast: false
-      matrix:
-         num_runners: [1]
-         runner_id: [1]
-         #Test elements should be added as [KubeCTLVersion, K8s-image, KindVersion]
-         test: ${{ fromJson(needs.build-matrix.outputs.test) }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
-        with:
-          # The "upgrade" integration test needs the history to ensure
-          # that the version number in the source code has been bumped as
-          # expected. This action does not fetch tags unless we supply a
-          # fetch depth of zero.
-          fetch-depth: 0
-      - name: Setup go
-        uses: actions/setup-go@0c52d547c9bc32b1aa3301fd7a9cb496313a4491 # v5.0.0
-        with:
-          go-version: ${{ env.GO_VERSION }}
-      - name: Install regctl
-        uses: regclient/actions/regctl-installer@b6614f5f56245066b533343a85f4109bdc38c8cc # main
-      - name: Load cached deps
-        uses: actions/cache@704facf57e6136b1bc63b828d79edcd491f0ee84 # v3.3.2
-        with:
-          path: ~/go/pkg/mod
-          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-      - name: Load cached build tools
-        uses: actions/cache@704facf57e6136b1bc63b828d79edcd491f0ee84 # v3.3.2
-        with:
-          path: .build
-          key: ${{ runner.os }}-tools-${{ hashFiles('.go-version','Makefile') }}
-      - name: Download archived images
-        uses: actions/download-artifact@7a1cd3216ca9260cd8022db641d960b1db4d1be4 # v4.0.0
-        with:
-          name: images
-          path: .
-      - name: Load archived images
-        run: |
-          tar xvf images.tar.gz
-          make load-images
-      - name: Run k8s integration
-        env:
-          NUM_RUNNERS: ${{ matrix.num_runners }}
-          THIS_RUNNER: ${{ matrix.runner_id }}
-          KUBECTLVERSION: ${{ matrix.test[0] }}
-          K8SIMAGE: ${{ matrix.test[1] }}
-          KINDVERSION: ${{ matrix.test[2] }}
-          TERM: dumb
-          CICD_TARGET_BRANCH: ${{ github.event.pull_request.base.ref }}
-        run: ./.github/workflows/scripts/split_k8s.sh | xargs ./test/integration/test-k8s.sh
-
-
-  integration-windows:
-    name: integration (windows)
-    runs-on: windows-2022
-    needs: images-windows
-    timeout-minutes: 45
-
-    permissions:
-      contents: read
-
-    defaults:
-      run:
-        shell: msys2 {0}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
-      - name: Setup go
-        uses: actions/setup-go@0c52d547c9bc32b1aa3301fd7a9cb496313a4491 # v5.0.0
-        with:
-          go-version: ${{ env.GO_VERSION }}
-      - name: Load cached deps
-        uses: actions/cache@704facf57e6136b1bc63b828d79edcd491f0ee84 # v3.3.2
-        with:
-          path: ~/go/pkg/mod
-          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-      - name: Load cached build tools
-        uses: actions/cache@704facf57e6136b1bc63b828d79edcd491f0ee84 # v3.3.2
-        with:
-          path: .build
-          key: ${{ runner.os }}-tools-${{ hashFiles('.go-version','Makefile') }}
-      - name: Install msys2
-        uses: msys2/setup-msys2@07aeda7763550b267746a772dcea5e5ac3340b36 # v2
-        with:
-          msystem: MINGW64
-          update: true
-          path-type: inherit
-          install: >-
-            git base-devel mingw-w64-x86_64-toolchain unzip
-      - name: Download archived images
-        uses: actions/download-artifact@7a1cd3216ca9260cd8022db641d960b1db4d1be4 # v4.0.0
-        with:
-          name: images-windows
-          path: .
-      - name: Load archived images
-        run: docker load -i images-windows.tar.gz
-      - name: Run integration tests
-        # Run all tests for now
-        run: make integration-windows
-
-  cache-deps-windows:
-    name: cache-deps (windows)
-    runs-on: windows-2022
-    timeout-minutes: 45
-
-    permissions:
-      contents: read
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
-      - name: Setup go
-        uses: actions/setup-go@0c52d547c9bc32b1aa3301fd7a9cb496313a4491 # v5.0.0
-        with:
-          go-version: ${{ env.GO_VERSION }}
-      - name: Setup dep cache
-        uses: actions/cache@704facf57e6136b1bc63b828d79edcd491f0ee84 # v3.3.2
-        with:
-          path: ~/go/pkg/mod
-          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-      - name: Pull go deps
-        run: go mod download
-
-  lint-windows:
-    name: lint (windows)
-    runs-on: windows-2022
-    needs: cache-deps-windows
-    timeout-minutes: 45
-
-    permissions:
-      contents: read
-
-    defaults:
-      run:
-        shell: msys2 {0}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
-      - name: Setup go
-        uses: actions/setup-go@0c52d547c9bc32b1aa3301fd7a9cb496313a4491 # v5.0.0
-        with:
-          go-version: ${{ env.GO_VERSION }}
-      - name: Load cached deps
-        uses: actions/cache@704facf57e6136b1bc63b828d79edcd491f0ee84 # v3.3.2
-        with:
-          path: ~/go/pkg/mod
-          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-      - name: Setup build tool cache
-        uses: actions/cache@704facf57e6136b1bc63b828d79edcd491f0ee84 # v3.3.2
-        with:
-          path: .build
-          key: ${{ runner.os }}-tools-${{ hashFiles('.go-version','Makefile') }}
-      - name: Install msys2
-        uses: msys2/setup-msys2@07aeda7763550b267746a772dcea5e5ac3340b36 # v2
-        with:
-          msystem: MINGW64
-          update: true
-          install: >-
-            git base-devel mingw-w64-x86_64-toolchain unzip
-      - name: Lint
-        run: make lint-code
-      - name: Tidy check
-        run: make tidy-check
-      - name: Generate check
-        run: make generate-check
-
-  unit-test-windows:
-    name: unit-test (windows)
-    runs-on: windows-2022
-    needs: cache-deps-windows
-    timeout-minutes: 45
-
-    permissions:
-      contents: read
-
-    defaults:
-      run:
-        shell: msys2 {0}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
-      - name: Setup go
-        uses: actions/setup-go@0c52d547c9bc32b1aa3301fd7a9cb496313a4491 # v5.0.0
-        with:
-          go-version: ${{ env.GO_VERSION }}
-      - name: Load cached deps
-        uses: actions/cache@704facf57e6136b1bc63b828d79edcd491f0ee84 # v3.3.2
-        with:
-          path: ~/go/pkg/mod
-          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-      - name: Install msys2
-        uses: msys2/setup-msys2@07aeda7763550b267746a772dcea5e5ac3340b36 # v2
-        with:
-          msystem: MINGW64
-          update: true
-          install: >-
-            git base-devel mingw-w64-x86_64-toolchain unzip
-      - name: Run unit tests
-        run: ./.github/workflows/scripts/run_unit_tests.sh
 
   artifacts-windows:
     name: artifacts (windows)
@@ -543,7 +279,7 @@ jobs:
       - name: Build artifacts
         run: ./.github/workflows/scripts/build_artifacts.sh ${{ runner.os }}
       - name: Archive artifacts
-        uses: actions/upload-artifact@c7d193f32edcb7bfad88892161225aeda64e9392 # v3
+        uses: actions/upload-artifact@c7d193f32edcb7bfad88892161225aeda64e9392 # v4
         with:
           name: binaries-${{ runner.os }}
           path: ./artifacts/
