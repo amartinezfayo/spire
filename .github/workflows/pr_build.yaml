@@ -37,25 +37,6 @@ jobs:
           name: images-windows
           path: images-windows.tar.gz
 
-  build-matrix:
-    name: Build matrix
-    runs-on: ubuntu-20.04
-    needs: [cache-deps]
-    permissions:
-      contents: read
-    steps:
-      - name: Checkout
-        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
-      - id: set-matrix
-        name: Collect versions
-        run: |
-          json_array=$(bash ./.github/workflows/scripts/find_k8s.sh)
-          echo "test=$json_array" >> $GITHUB_OUTPUT
-          echo "Collected tests: $json_array"
-
-    outputs:
-      test: ${{ steps.set-matrix.outputs.test }}
-
   cache-deps-windows:
     name: cache-deps (windows)
     runs-on: windows-2022
