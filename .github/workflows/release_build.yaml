@@ -182,7 +182,7 @@ jobs:
   images-windows:
     name: images (windows)
     runs-on: windows-2022
-    needs: artifact-windows
+    needs: artifacts-windows
 
     permissions:
       contents: read
