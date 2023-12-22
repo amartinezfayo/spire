@@ -392,7 +392,7 @@ jobs:
         uses: msys2/setup-msys2@07aeda7763550b267746a772dcea5e5ac3340b36 # v2
         with:
           msystem: MINGW64
-          update: true
+          release: false
           path-type: inherit
           install: >-
             git base-devel mingw-w64-x86_64-toolchain unzip
@@ -463,7 +463,7 @@ jobs:
         uses: msys2/setup-msys2@07aeda7763550b267746a772dcea5e5ac3340b36 # v2
         with:
           msystem: MINGW64
-          update: true
+          release: false
           install: >-
             git base-devel mingw-w64-x86_64-toolchain unzip
       - name: Lint
@@ -501,7 +501,7 @@ jobs:
         uses: msys2/setup-msys2@07aeda7763550b267746a772dcea5e5ac3340b36 # v2
         with:
           msystem: MINGW64
-          update: true
+          release: false
           install: >-
             git base-devel mingw-w64-x86_64-toolchain unzip
       - name: Run unit tests
@@ -540,7 +540,7 @@ jobs:
         uses: msys2/setup-msys2@07aeda7763550b267746a772dcea5e5ac3340b36 # v2
         with:
           msystem: MINGW64
-          update: true
+          release: false
           install: >-
             git base-devel mingw-w64-x86_64-toolchain zip unzip
       - name: Build binaries
