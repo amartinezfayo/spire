@@ -36,7 +36,7 @@ var _ datastore.DataStore = (*DataStore)(nil)
 func New(tb testing.TB) *DataStore {
 	log, _ := test.NewNullLogger()
 
-	ds := sql.New(log, false)
+	ds := sql.New(log, true)
 	ds.SetUseServerTimestamps(true)
 
 	err := ds.Configure(ctx, fmt.Sprintf(`
@@ -381,6 +381,34 @@ func (s *DataStore) UpdateFederationRelationship(ctx context.Context, fr *datast
 		return nil, err
 	}
 	return s.ds.UpdateFederationRelationship(ctx, fr, mask)
+}
+
+func (s *DataStore) FetchCAJournal(ctx context.Context, activeX509AuthorityID string) (*datastore.CAJournal, error) {
+	if err := s.getNextError(); err != nil {
+		return nil, err
+	}
+	return s.ds.FetchCAJournal(ctx, activeX509AuthorityID)
+}
+
+func (s *DataStore) ListCAJournalsForTesting(ctx context.Context) ([]*datastore.CAJournal, error) {
+	if err := s.getNextError(); err != nil {
+		return nil, err
+	}
+	return s.ds.ListCAJournalsForTesting(ctx)
+}
+
+func (s *DataStore) SetCAJournal(ctx context.Context, caJournal *datastore.CAJournal) (*datastore.CAJournal, error) {
+	if err := s.getNextError(); err != nil {
+		return nil, err
+	}
+	return s.ds.SetCAJournal(ctx, caJournal)
+}
+
+func (s *DataStore) PruneCAJournals(ctx context.Context, allCAsExpireBefore int64) error {
+	if err := s.getNextError(); err != nil {
+		return err
+	}
+	return s.ds.PruneCAJournals(ctx, allCAsExpireBefore)
 }
 
 func (s *DataStore) SetNextError(err error) {

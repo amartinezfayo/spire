@@ -27,13 +27,13 @@ import (
 	"github.com/spiffe/spire/pkg/common/telemetry"
 	"github.com/spiffe/spire/pkg/common/x509util"
 	"github.com/spiffe/spire/proto/spire/common"
+	"github.com/spiffe/spire/test/grpctest"
 	"github.com/spiffe/spire/test/spiretest"
 	"github.com/spiffe/spire/test/testca"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/protobuf/types/known/structpb"
 )
 
@@ -1508,35 +1508,28 @@ func runTest(t *testing.T, params testParams, fn func(ctx context.Context, clien
 		AllowedForeignJWTClaims:       params.AllowedForeignJWTClaims,
 	})
 
-	unaryInterceptor, streamInterceptor := middleware.Interceptors(middleware.Chain(
+	server := grpctest.StartServer(t, func(s grpc.ServiceRegistrar) {
+		workloadPB.RegisterSpiffeWorkloadAPIServer(s, handler)
+	}, grpctest.Middleware(
 		middleware.WithLogger(log),
 		middleware.Preprocess(func(ctx context.Context, fullMethod string, req any) (context.Context, error) {
 			return rpccontext.WithCallerPID(ctx, params.AsPID), nil
 		}),
-	))
-
-	server := grpc.NewServer(
-		grpc.UnaryInterceptor(unaryInterceptor),
-		grpc.StreamInterceptor(streamInterceptor),
+	), grpctest.OverUDS(),
 	)
-	workloadPB.RegisterSpiffeWorkloadAPIServer(server, handler)
-	addr := spiretest.ServeGRPCServerOnTempUDSSocket(t, server)
-	t.Cleanup(func() { server.Stop() })
+
+	conn := server.Dial(t)
 
 	// Provide a cancelable context to ensure the stream is always
 	// closed when the test case is done, and also to ensure that
 	// any unexpected blocking call is timed out.
 	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 	defer cancel()
-
-	conn, err := grpc.DialContext(ctx, "unix:"+addr.String(), grpc.WithTransportCredentials(insecure.NewCredentials()))
-	require.NoError(t, err)
-	t.Cleanup(func() { conn.Close() })
-
 	fn(ctx, workloadPB.NewSpiffeWorkloadAPIClient(conn))
-
 	cancel()
-	server.GracefulStop()
+
+	// Stop the server (draining the handlers)
+	server.Stop()
 
 	assert.Equal(t, 0, manager.Subscribers(), "there should be no more subscribers")
 

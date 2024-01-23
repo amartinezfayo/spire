@@ -10,7 +10,7 @@ The `sql` plugin implements SQL based data storage for the SPIRE server using SQ
 | root_ca_path         | Path to Root CA bundle (MySQL only)                                                                                                                                                                                                                                                |
 | client_cert_path     | Path to client certificate (MySQL only)                                                                                                                                                                                                                                            |
 | client_key_path      | Path to private key for client certificate (MySQL only)                                                                                                                                                                                                                            |
-| max_open_conns       | The maximum number of open db connections (default: unlimited)                                                                                                                                                                                                                     |
+| max_open_conns       | The maximum number of open db connections (default: 100)                                                                                                                                                                                                                     |
 | max_idle_conns       | The maximum number of idle connections in the pool (default: 2)                                                                                                                                                                                                                    |
 | conn_max_lifetime    | The maximum amount of time a connection may be reused (default: unlimited)                                                                                                                                                                                                         |
 | disable_migration    | True to disable auto-migration functionality. Use of this flag allows finer control over when datastore migrations occur and coordination of the migration of a datastore shared with a SPIRE Server cluster. Only available for databases from SPIRE Code version 0.9.0 or later. |
@@ -131,6 +131,60 @@ If you need to use custom Root CA, just specify `root_ca_path` in the plugin con
         plugin_data {
             database_type = "mysql"
             connection_string = "spire:@tcp(127.0.0.1)/spire_development?parseTime=true"
+        }
+    }
+```
+
+### IAM Authentication
+
+With IAM database authentication, an authentication token is used instead of a password when connecting to the database. For that reason, a password must not be provided in the connection string.
+
+The `database_type` configuration can have additional settings when a database type supporting IAM authentication is used, and always takes the following form:
+
+```hcl
+    database_type "dbtype-with-iam-support" {
+        setting_1 = "value-1"
+        setting_2 = "value-2"
+        ...
+    }
+```
+
+The following database types support IAM authentication:
+
+#### "aws_postgres"
+
+The `aws_postgres` database type specifies that the database is a PostgreSQL database hosted by the AWS RDS service, and IAM authentication is used to authenticate to the database. As part of the `database_type` setting, the `region` of the service must be specified.
+
+Settings of the [`postgres`](#database_type--postgres) database type also apply for this type.
+
+##### Sample configuration
+
+```hcl
+    DataStore "sql" {
+        plugin_data {
+           database_type "aws_postgres" {
+                region = "us-east-2"
+            }
+            connection_string = "dbname=spire user=test_user host=spire-test-postgres.whjayetrnc2a.us-east-2.rds.amazonaws.com port=5432 sslmode=require"
+        }
+   }
+```
+
+#### "aws_mysql"
+
+The `aws_mysql` database type specifies that the database is a MySQL database hosted by the AWS RDS service, and IAM authentication is used to authenticate to the database. As part of the `database_type` setting, the `region` of the service must be specified.
+
+Settings of the [`mysql`](#database_type--mysql) database type also apply for this type.
+
+##### Sample configuration
+
+```hcl
+    DataStore "sql" {
+        plugin_data {
+            database_type "aws_mysql" {
+                region = "us-east-2"
+            }
+            connection_string="test_user:@tcp(spire-test.whjayetrnc2a.us-east-2.rds.amazonaws.com:3306)/spire?parseTime=true&allowCleartextPasswords=1&tls=true"
         }
     }
 ```

@@ -22,6 +22,7 @@ import (
 	"github.com/spiffe/spire/proto/private/server/journal"
 	"github.com/spiffe/spire/proto/spire/common"
 	"github.com/spiffe/spire/test/fakes/fakedatastore"
+	"github.com/spiffe/spire/test/grpctest"
 	"github.com/spiffe/spire/test/spiretest"
 	"github.com/spiffe/spire/test/testkey"
 	testutil "github.com/spiffe/spire/test/util"
@@ -1796,9 +1797,6 @@ func setupServiceTest(t *testing.T) *serviceTest {
 
 	log, logHook := test.NewNullLogger()
 	log.Level = logrus.DebugLevel
-	registerFn := func(s *grpc.Server) {
-		localauthorityv1.RegisterLocalAuthorityServer(s, service)
-	}
 
 	test := &serviceTest{
 		ds:      ds,
@@ -1806,22 +1804,20 @@ func setupServiceTest(t *testing.T) *serviceTest {
 		ca:      m,
 	}
 
-	ppMiddleware := middleware.Preprocess(func(ctx context.Context, fullMethod string, req any) (context.Context, error) {
-		ctx = rpccontext.WithLogger(ctx, log)
-		return ctx, nil
-	})
+	overrideContext := func(ctx context.Context) context.Context {
+		return rpccontext.WithLogger(ctx, log)
+	}
 
-	unaryInterceptor, streamInterceptor := middleware.Interceptors(middleware.Chain(
-		ppMiddleware,
-		// Add audit log with local tracking disabled
-		middleware.WithAuditLog(false),
-	))
-	server := grpc.NewServer(
-		grpc.UnaryInterceptor(unaryInterceptor),
-		grpc.StreamInterceptor(streamInterceptor),
+	server := grpctest.StartServer(t, func(s grpc.ServiceRegistrar) {
+		localauthority.RegisterService(s, service)
+	},
+		grpctest.OverrideContext(overrideContext),
+		grpctest.Middleware(middleware.WithAuditLog(false)),
 	)
-	conn, done := spiretest.NewAPIServerWithMiddleware(t, registerFn, server)
-	test.done = done
+
+	conn := server.Dial(t)
+
+	test.done = server.Stop
 	test.client = localauthorityv1.NewLocalAuthorityClient(conn)
 
 	return test
@@ -1865,7 +1861,7 @@ func (m *fakeCAManager) PrepareJWTKey(context.Context) error {
 	return m.prepareJWTKeyErr
 }
 
-func (m *fakeCAManager) RotateJWTKey() {
+func (m *fakeCAManager) RotateJWTKey(context.Context) {
 	m.rotateJWTKeyCalled = true
 }
 
@@ -1881,7 +1877,7 @@ func (m *fakeCAManager) PrepareX509CA(context.Context) error {
 	return m.prepareX509CAErr
 }
 
-func (m *fakeCAManager) RotateX509CA() {
+func (m *fakeCAManager) RotateX509CA(context.Context) {
 	m.rotateX509CACalled = true
 }
 
