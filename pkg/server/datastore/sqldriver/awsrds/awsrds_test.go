@@ -238,18 +238,22 @@ func TestAWSRDS(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
+			fmt.Printf("testCase: %s\n", testCase.name)
 			dsn, err := testCase.config.FormatDSN()
 			require.NoError(t, err)
 
 			fakeSQLDriverWrapper.tokenBuilder = testCase.tokenProvider
 
+			fmt.Printf("dsn: %s\n", dsn)
 			db, err := gorm.Open(fakeSQLDriverName, dsn)
 			if testCase.expectedError != "" {
 				require.EqualError(t, err, testCase.expectedError)
+				fmt.Printf("SUCCESS!\n\n")
 				return
 			}
 			require.NoError(t, err)
 			require.NotNil(t, db)
+			fmt.Printf("SUCCESS!\n\n")
 		})
 	}
 }
