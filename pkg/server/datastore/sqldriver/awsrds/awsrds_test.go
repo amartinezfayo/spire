@@ -183,17 +183,6 @@ func TestAWSRDS(t *testing.T) {
 			},
 		},
 		{
-			name: "postgres - password already present",
-			config: &Config{
-				DriverName: PostgresDriverName,
-				ConnString: "password=the-password",
-			},
-			tokenProvider: &fakeTokenBuilder{
-				authToken: token,
-			},
-			expectedError: "unexpected password in connection string for IAM authentication",
-		},
-		{
 			name: "postgres - invalid connection string",
 			config: &Config{
 				DriverName: PostgresDriverName,
@@ -233,6 +222,17 @@ func TestAWSRDS(t *testing.T) {
 				authToken: token,
 			},
 			expectedError: "missing driver name",
+		},
+		{
+			name: "postgres - password already present",
+			config: &Config{
+				DriverName: PostgresDriverName,
+				ConnString: "password=the-password",
+			},
+			tokenProvider: &fakeTokenBuilder{
+				authToken: token,
+			},
+			expectedError: "unexpected password in connection string for IAM authentication",
 		},
 	}
 
