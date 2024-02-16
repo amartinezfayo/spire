@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/go-sql-driver/mysql"
@@ -64,6 +65,7 @@ type tokens map[string]tokenGetter
 
 // sqlDriverWrapper is a wrapper for SQL drivers, adding IAM authentication.
 type sqlDriverWrapper struct {
+	mtx          sync.Mutex
 	sqlDriver    driver.Driver
 	tokenBuilder authTokenBuilder
 	tokensMap    tokens
@@ -72,6 +74,9 @@ type sqlDriverWrapper struct {
 // Open is the overridden method for opening a connection, using
 // AWS IAM authentication
 func (w *sqlDriverWrapper) Open(name string) (driver.Conn, error) {
+	w.mtx.Lock()
+	defer w.mtx.Unlock()
+
 	if w.sqlDriver == nil {
 		return nil, errors.New("missing sql driver")
 	}
