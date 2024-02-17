@@ -115,7 +115,7 @@ func addPasswordToPostgresConnString(connString, password string) (string, error
 		return "", fmt.Errorf("could not parse connection string: %w", err)
 	}
 	if cfg.Password != "" {
-		return "", errors.New("unexpected password in connection string for IAM authentication")
+		return "", fmt.Errorf("unexpected password in connection string for IAM authentication: %q", cfg.Password)
 	}
 	return fmt.Sprintf("%s password=%s", connString, password), nil
 }
