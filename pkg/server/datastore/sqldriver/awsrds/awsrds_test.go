@@ -6,6 +6,7 @@ import (
 	"database/sql/driver"
 	"errors"
 	"fmt"
+	"os"
 	"testing"
 	"time"
 
@@ -31,6 +32,9 @@ var (
 )
 
 func TestAWSRDS(t *testing.T) {
+	fmt.Printf("env: %v\n\n", os.Environ())
+	t.Setenv("PGPASSWORD", "")
+
 	testCases := []struct {
 		name          string
 		config        *Config
@@ -232,7 +236,7 @@ func TestAWSRDS(t *testing.T) {
 			tokenProvider: &fakeTokenBuilder{
 				authToken: token,
 			},
-			expectedError: "unexpected password in connection string for IAM authentication",
+			expectedError: "unexpected password in connection string for IAM authentication: \"the-password\"",
 		},
 	}
 
