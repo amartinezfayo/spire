@@ -248,12 +248,12 @@ func TestAWSRDS(t *testing.T) {
 			db, err := gorm.Open(fakeSQLDriverName, dsn)
 			if testCase.expectedError != "" {
 				require.EqualError(t, err, testCase.expectedError)
-				fmt.Printf("SUCCESS!\n\n")
+				fmt.Printf("SUCCESS %s!\n\n", testCase.name)
 				return
 			}
-			require.NoError(t, err)
+			require.NoError(t, err, fmt.Sprintf("FAILED! dsn: %s\n\n", dsn))
 			require.NotNil(t, db)
-			fmt.Printf("SUCCESS!\n\n")
+			fmt.Printf("SUCCESS %s!\n\n", testCase.name)
 		})
 	}
 }
