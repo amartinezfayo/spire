@@ -285,6 +285,9 @@ const (
 	// non-error level.
 	Error = "error"
 
+	// EventID tags an event ID
+	EventID = "event_id"
+
 	// Expect tags an expected value, as opposed to the one received. Message should clarify
 	// what kind of value was expected, and a different field should show the received value
 	Expect = "expect"
@@ -332,6 +335,9 @@ const (
 	// Generation represents an objection generation (i.e. version)
 	Generation = "generation"
 
+	// Hash tags a hash
+	Hash = "hash"
+
 	// Hint tags registration entry hint
 	Hint = "hint"
 
@@ -375,6 +381,9 @@ const (
 	// Network tags some network name ("tcp", "udp")
 	Network = "network"
 
+	// NewHash tags a new hash
+	NewHash = "new_hash"
+
 	// NewSerialNumber tags a certificate new serial number
 	NewSerialNumber = "new_serial_num"
 
@@ -383,6 +392,9 @@ const (
 
 	// Nonce tags some nonce for communication
 	Nonce = "nonce"
+
+	// OldHash tags a hash
+	OldHash = "old_hash"
 
 	// ParentID tags parent ID for an entry
 	ParentID = "parent_id"
@@ -444,6 +456,9 @@ const (
 
 	// RecordMapSize is the gauge key to hold the size of the LRU cache entries map
 	RecordMapSize = "lru_cache_record_map_size"
+
+	// Reconfigurable tags whether or not something is reconfigurable.
+	Reconfigurable = "reconfigurable"
 
 	// RefreshHint tags a bundle refresh hint
 	RefreshHint = "refresh_hint"
