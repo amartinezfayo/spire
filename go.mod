@@ -91,11 +91,11 @@ require (
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20260311181403-84a4fc48630c
 	google.golang.org/grpc v1.79.2
 	google.golang.org/protobuf v1.36.11
-	k8s.io/api v0.35.2
-	k8s.io/apimachinery v0.35.2
-	k8s.io/client-go v0.35.2
-	k8s.io/kube-aggregator v0.35.2
-	k8s.io/mount-utils v0.35.2
+	k8s.io/api v0.35.3
+	k8s.io/apimachinery v0.35.3
+	k8s.io/client-go v0.35.3
+	k8s.io/kube-aggregator v0.35.3
+	k8s.io/mount-utils v0.35.3
 	sigs.k8s.io/controller-runtime v0.23.3
 )
 
