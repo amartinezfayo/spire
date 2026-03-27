@@ -67,7 +67,7 @@ require (
 	github.com/lib/pq v1.11.2
 	github.com/mattn/go-sqlite3 v1.14.37
 	github.com/mitchellh/cli v1.1.5
-	github.com/open-policy-agent/opa v1.14.1
+	github.com/open-policy-agent/opa v1.15.0
 	github.com/prometheus/client_golang v1.23.2
 	github.com/shirou/gopsutil/v4 v4.26.2
 	github.com/sigstore/cosign/v2 v2.6.2
@@ -89,7 +89,7 @@ require (
 	golang.org/x/time v0.15.0
 	google.golang.org/api v0.272.0
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20260311181403-84a4fc48630c
-	google.golang.org/grpc v1.79.2
+	google.golang.org/grpc v1.79.3
 	google.golang.org/protobuf v1.36.11
 	k8s.io/api v0.35.3
 	k8s.io/apimachinery v0.35.3
